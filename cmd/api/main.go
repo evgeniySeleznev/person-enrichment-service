@@ -12,9 +12,8 @@ import (
 	"github.com/evgeniySeleznev/person-enrichment-service/internal/delivery/http"
 	"github.com/evgeniySeleznev/person-enrichment-service/internal/repository/api"
 	"github.com/evgeniySeleznev/person-enrichment-service/internal/repository/postgresql"
-	"github.com/evgeniySeleznev/person-enrichment-service/pkg/logger"
-
 	"github.com/evgeniySeleznev/person-enrichment-service/internal/service"
+	"github.com/evgeniySeleznev/person-enrichment-service/pkg/logger"
 )
 
 // @title Person Enrichment API
