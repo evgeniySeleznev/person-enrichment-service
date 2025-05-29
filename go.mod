@@ -1,4 +1,4 @@
-module github.com/yourusername/person-enrichment-service
+module github.com/evgeniySeleznev/person-enrichment-service
 
 go 1.24.3
 
