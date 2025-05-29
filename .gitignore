@@ -1,0 +1,36 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# IDE specific
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.local
+
+# Dependency directories
+vendor/
+node_modules/
+
+# Debug files
+debug
+*.test
+
+# Build output
+dist/
+build/
+
+# Go files
+*.test
+*.out
+
+# Binary
+/main
