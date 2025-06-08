@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:17
+    container_name: person_enrichment_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: person_enrichment_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - person_enrichment_db_data:/var/lib/postgresql/data
+    networks:
+      - person_enrichment_network
+    restart: always
+
+volumes:
+  person_enrichment_db_data:
+
+networks:
+  person_enrichment_network:
+    driver: bridge
+
