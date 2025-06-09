@@ -30,20 +30,23 @@ func (s *PersonService) Create(ctx context.Context, input model.PersonInput) (*m
 		Patronymic: input.Patronymic,
 	}
 
+	//транслитерация для кириллицы
+	nameForAPI := Transliterate(input.Name)
+
 	// 2. Обогащение данных (параллельные запросы к API)
-	age, err := s.apiClient.GetAge(ctx, input.Name)
+	age, err := s.apiClient.GetAge(ctx, nameForAPI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get age: %w", err)
 	}
 	person.Age = &age
 
-	gender, err := s.apiClient.GetGender(ctx, input.Name)
+	gender, err := s.apiClient.GetGender(ctx, nameForAPI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get gender: %w", err)
 	}
 	person.Gender = &gender
 
-	nationality, err := s.apiClient.GetNationality(ctx, input.Name)
+	nationality, err := s.apiClient.GetNationality(ctx, nameForAPI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get nationality: %w", err)
 	}

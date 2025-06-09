@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/evgeniySeleznev/person-enrichment-service/internal/delivery/http"
+	"github.com/evgeniySeleznev/person-enrichment-service/internal/handler"
 	"github.com/evgeniySeleznev/person-enrichment-service/internal/repository/api"
 	"github.com/evgeniySeleznev/person-enrichment-service/internal/repository/postgresql"
 	"github.com/evgeniySeleznev/person-enrichment-service/internal/server"
@@ -11,6 +11,7 @@ import (
 	"github.com/evgeniySeleznev/person-enrichment-service/pkg/logger"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"log"
 	"os"
 
 	"context"
@@ -19,6 +20,8 @@ import (
 	_ "github.com/lib/pq"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+
+	"github.com/joho/godotenv"
 )
 
 // @title Person Enrichment API
@@ -43,20 +46,27 @@ func main() {
 	server := server.NewServer(os.Getenv("APP_Port"), router, appLogger)
 	server.Start()
 
-	//server := NewServer(os.Getenv("APP_PORT"), router, appLogger)
-	//server.Start()
 }
 
 func initDB(logger logger.Logger) (*sql.DB, error) {
-	db, err := sql.Open("postgres", fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_SSL_MODE"),
-	))
+
+	// Загружаем переменные окружения из файла .env
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	// Получаем переменные окружения
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+
+	// Формируем строку подключения
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPassword, dbName)
+
+	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
@@ -69,7 +79,7 @@ func initDB(logger logger.Logger) (*sql.DB, error) {
 	}
 	logger.Info("Database connection established")
 
-	// Добавляем автоматические миграции (новый код)
+	// Добавляем автоматические миграции
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create migration driver: %w", err)
