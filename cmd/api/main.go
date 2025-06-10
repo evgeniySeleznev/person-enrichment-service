@@ -71,7 +71,7 @@ func initDB(logger logger.Logger) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	// Проверка подключения (уже было)
+	// Проверка подключения
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := db.PingContext(ctx); err != nil {
@@ -79,7 +79,7 @@ func initDB(logger logger.Logger) (*sql.DB, error) {
 	}
 	logger.Info("Database connection established")
 
-	// Добавляем автоматические миграции
+	// Накатываем миграции
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create migration driver: %w", err)
@@ -87,7 +87,7 @@ func initDB(logger logger.Logger) (*sql.DB, error) {
 
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://migrations",
-		"postgres",
+		dbName,
 		driver,
 	)
 	if err != nil {
