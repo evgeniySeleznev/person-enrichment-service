@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
@@ -80,7 +81,8 @@ func (c *APIClient) GetNationality(ctx context.Context, name string) (string, er
 
 	var result struct {
 		Country []struct {
-			CountryID string `json:"country_id"`
+			CountryID   string  `json:"country_id"`
+			Probability float64 `json:"probability"`
 		} `json:"country"`
 	}
 	if err := json.Unmarshal(resp, &result); err != nil {
@@ -91,10 +93,31 @@ func (c *APIClient) GetNationality(ctx context.Context, name string) (string, er
 		return "", fmt.Errorf("no nationality data")
 	}
 
-	return strings.ToLower(result.Country[0].CountryID), nil // "ru" вместо "RU"
+	// 🎯 Лямбда-функция для взвешенного выбора страны
+	randCountry := func(countries []struct {
+		CountryID   string  `json:"country_id"`
+		Probability float64 `json:"probability"`
+	}) string {
+		var total float64
+		for _, c := range countries {
+			total += c.Probability
+		}
+		r := rand.Float64() * total
+
+		var acc float64
+		for _, c := range countries {
+			acc += c.Probability
+			if r < acc {
+				return c.CountryID
+			}
+		}
+		return countries[len(countries)-1].CountryID // На случай, если что-то пошло не так
+	}
+
+	return randCountry(result.Country), nil
 }
 
-// doRequest общий метод для HTTP-запросов
+// doRequest общий метод для остальных GET HTTP-запросов API-клиента
 func (c *APIClient) doRequest(ctx context.Context, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {

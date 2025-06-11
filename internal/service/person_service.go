@@ -40,13 +40,13 @@ func (s *PersonService) Create(ctx context.Context, input model.PersonInput) (*m
 	}
 	person.Age = &age
 
-	gender, err := s.apiClient.GetGender(ctx, nameForAPI)
+	gender, err := s.apiClient.GetGender(ctx, person.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get gender: %w", err)
 	}
 	person.Gender = &gender
 
-	nationality, err := s.apiClient.GetNationality(ctx, nameForAPI)
+	nationality, err := s.apiClient.GetNationality(ctx, person.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get nationality: %w", err)
 	}
