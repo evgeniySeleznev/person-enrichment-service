@@ -1,0 +1,276 @@
+basePath: /api
+definitions:
+  model.Person:
+    properties:
+      age:
+        description: |-
+          Возраст
+          example: 30
+        type: integer
+      gender:
+        description: |-
+          Пол (male/female)
+          example: male
+        type: string
+      id:
+        description: |-
+          Уникальный идентификатор
+          example: 1
+        type: integer
+      name:
+        description: |-
+          Имя
+          example: Иван
+        type: string
+      nationality:
+        description: |-
+          Код страны (2 символа)
+          example: RU
+        type: string
+      patronymic:
+        description: |-
+          Отчество
+          example: Иванович
+        type: string
+      surname:
+        description: |-
+          Фамилия
+          example: Иванов
+        type: string
+    type: object
+  model.PersonInput:
+    properties:
+      name:
+        description: |-
+          Имя
+          example: Иван
+        maxLength: 50
+        minLength: 2
+        type: string
+      patronymic:
+        description: |-
+          Отчество
+          example: Иванович
+        maxLength: 50
+        minLength: 2
+        type: string
+      surname:
+        description: |-
+          Фамилия
+          example: Иванов
+        maxLength: 50
+        minLength: 2
+        type: string
+    required:
+    - name
+    - surname
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Сервис для обогащения данных о людях
+  title: Person Enrichment API
+  version: "1.0"
+paths:
+  /api/persons:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список людей с пагинацией и фильтрацией по полю (имя,
+        фамилия, возраст и т.д.)
+      parameters:
+      - default: 1
+        description: Номер страницы
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Размер страницы
+        in: query
+        name: page_size
+        type: integer
+      - description: Имя
+        example: '"Иван"'
+        in: query
+        name: name
+        type: string
+      - description: Фамилия
+        example: '"Иванов"'
+        in: query
+        name: surname
+        type: string
+      - description: Минимальный возраст
+        in: query
+        name: age_min
+        type: integer
+      - description: Максимальный возраст
+        in: query
+        name: age_max
+        type: integer
+      - description: Пол
+        in: query
+        name: gender
+        type: string
+      - description: Национальность
+        in: query
+        name: nationality
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список людей
+          schema:
+            items:
+              $ref: '#/definitions/model.Person'
+            type: array
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Получить список людей с фильтрацией и пагинацией
+      tags:
+      - Люди
+    post:
+      consumes:
+      - application/json
+      description: Добавляет нового человека в систему с обогащёнными данными (возраст,
+        пол, национальность)
+      parameters:
+      - description: Данные человека
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/model.PersonInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Человек успешно создан
+          schema:
+            $ref: '#/definitions/model.Person'
+        "400":
+          description: Неверный формат данных
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Создать нового человека
+      tags:
+      - Люди
+  /api/persons/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет запись о человеке по уникальному ID
+      parameters:
+      - description: ID человека
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Человек успешно удалён
+        "400":
+          description: Неверный формат ID
+          schema:
+            type: string
+        "404":
+          description: Человек не найден
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Удалить человека по ID
+      tags:
+      - Люди
+    get:
+      consumes:
+      - application/json
+      description: Возвращает данные человека по его уникальному ID
+      parameters:
+      - description: ID человека
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о человеке
+          schema:
+            $ref: '#/definitions/model.Person'
+        "404":
+          description: Человек не найден
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Получить информацию о человеке по ID
+      tags:
+      - Люди
+    patch:
+      consumes:
+      - application/json
+      description: Обновляет информацию о человеке по его ID
+      parameters:
+      - description: ID человека
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Новые данные
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/model.Person'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Данные успешно обновлены
+        "400":
+          description: Неверный формат данных
+          schema:
+            type: string
+        "404":
+          description: Человек не найден
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Обновить данные человека
+      tags:
+      - Люди
+  /health:
+    get:
+      description: Возвращает статус сервера для проверки его доступности
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Проверка доступности API
+      tags:
+      - Здоровье
+swagger: "2.0"

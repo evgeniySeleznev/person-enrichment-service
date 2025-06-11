@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/evgeniySeleznev/person-enrichment-service/docs"
 	"github.com/evgeniySeleznev/person-enrichment-service/pkg/logger"
 	"github.com/gorilla/mux"
 )

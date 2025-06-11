@@ -32,6 +32,10 @@ func NewRouter(service *service.PersonService, logger logger.Logger) *mux.Router
 	api.HandleFunc("/persons", handler.GetAllPersons).Methods("GET")
 	api.HandleFunc("/persons/{id}", handler.UpdatePerson).Methods("PATCH")
 	api.HandleFunc("/persons/{id}", handler.DeletePerson).Methods("DELETE")
+	router.HandleFunc("/health", handler.HealthCheck).Methods("GET")
+	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+
+	return router
 
 	// Swagger UI
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)

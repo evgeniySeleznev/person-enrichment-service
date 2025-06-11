@@ -1,0 +1,374 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Сервис для обогащения данных о людях",
+        "title": "Person Enrichment API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api",
+    "paths": {
+        "/api/persons": {
+            "get": {
+                "description": "Возвращает список людей с пагинацией и фильтрацией по полю (имя, фамилия, возраст и т.д.)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Люди"
+                ],
+                "summary": "Получить список людей с фильтрацией и пагинацией",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Номер страницы",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Размер страницы",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"Иван\"",
+                        "description": "Имя",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"Иванов\"",
+                        "description": "Фамилия",
+                        "name": "surname",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Минимальный возраст",
+                        "name": "age_min",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Максимальный возраст",
+                        "name": "age_max",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Пол",
+                        "name": "gender",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Национальность",
+                        "name": "nationality",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список людей",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Person"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Добавляет нового человека в систему с обогащёнными данными (возраст, пол, национальность)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Люди"
+                ],
+                "summary": "Создать нового человека",
+                "parameters": [
+                    {
+                        "description": "Данные человека",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.PersonInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Человек успешно создан",
+                        "schema": {
+                            "$ref": "#/definitions/model.Person"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат данных",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/persons/{id}": {
+            "get": {
+                "description": "Возвращает данные человека по его уникальному ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Люди"
+                ],
+                "summary": "Получить информацию о человеке по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID человека",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Информация о человеке",
+                        "schema": {
+                            "$ref": "#/definitions/model.Person"
+                        }
+                    },
+                    "404": {
+                        "description": "Человек не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удаляет запись о человеке по уникальному ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Люди"
+                ],
+                "summary": "Удалить человека по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID человека",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Человек успешно удалён"
+                    },
+                    "400": {
+                        "description": "Неверный формат ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Человек не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Обновляет информацию о человеке по его ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Люди"
+                ],
+                "summary": "Обновить данные человека",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID человека",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Новые данные",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Person"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Данные успешно обновлены"
+                    },
+                    "400": {
+                        "description": "Неверный формат данных",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Человек не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Возвращает статус сервера для проверки его доступности",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Здоровье"
+                ],
+                "summary": "Проверка доступности API",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "model.Person": {
+            "type": "object",
+            "properties": {
+                "age": {
+                    "description": "Возраст\nexample: 30",
+                    "type": "integer"
+                },
+                "gender": {
+                    "description": "Пол (male/female)\nexample: male",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Уникальный идентификатор\nexample: 1",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "Имя\nexample: Иван",
+                    "type": "string"
+                },
+                "nationality": {
+                    "description": "Код страны (2 символа)\nexample: RU",
+                    "type": "string"
+                },
+                "patronymic": {
+                    "description": "Отчество\nexample: Иванович",
+                    "type": "string"
+                },
+                "surname": {
+                    "description": "Фамилия\nexample: Иванов",
+                    "type": "string"
+                }
+            }
+        },
+        "model.PersonInput": {
+            "type": "object",
+            "required": [
+                "name",
+                "surname"
+            ],
+            "properties": {
+                "name": {
+                    "description": "Имя\nexample: Иван",
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "patronymic": {
+                    "description": "Отчество\nexample: Иванович",
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "surname": {
+                    "description": "Фамилия\nexample: Иванов",
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                }
+            }
+        }
+    }
+}

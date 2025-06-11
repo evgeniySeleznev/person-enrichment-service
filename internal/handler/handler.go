@@ -31,14 +31,13 @@ func NewPersonHandler(service *service.PersonService, logger logger.Logger) *Per
 }
 
 // CreatePerson обрабатывает POST /api/persons
-// CreatePerson godoc
-// @Summary Создать человека
-// @Description Добавляет новую запись с обогащёнными данными (возраст, пол, национальность)
+// @Summary Создать нового человека
+// @Description Добавляет нового человека в систему с обогащёнными данными (возраст, пол, национальность)
 // @Tags Люди
 // @Accept json
 // @Produce json
 // @Param input body model.PersonInput true "Данные человека"
-// @Success 201 {object} model.Person
+// @Success 201 {object} model.Person "Человек успешно создан"
 // @Failure 400 {string} string "Неверный формат данных"
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/persons [post]
@@ -63,13 +62,15 @@ func (h *PersonHandler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetPerson обрабатывает GET /api/persons/{id}
-// GetPerson godoc
-// @Summary Получить человека по ID
+// @Summary Получить информацию о человеке по ID
+// @Description Возвращает данные человека по его уникальному ID
 // @Tags Люди
+// @Accept json
 // @Produce json
 // @Param id path int true "ID человека"
-// @Success 200 {object} model.Person
+// @Success 200 {object} model.Person "Информация о человеке"
 // @Failure 404 {string} string "Человек не найден"
+// @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/persons/{id} [get]
 func (h *PersonHandler) GetPerson(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -90,43 +91,9 @@ func (h *PersonHandler) GetPerson(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(person)
 }
 
-// GetAllPersons обрабатывает GET /api/persons
-// GetAllPersons godoc
-// @Summary Получить список людей
-// @Description Возвращает список людей с пагинацией
-// @Tags Люди
-// @Produce json
-// @Param page query int false "Номер страницы (по умолчанию 1)" default(1)
-// @Param page_size query int false "Размер страницы (по умолчанию 10, максимум 100)" default(10)
-// @Success 200 {array} model.Person
-// @Failure 500 {string} string "Ошибка сервера"
-// @Router /api/persons [get]
-func (h *PersonHandler) GetAllPersons(w http.ResponseWriter, r *http.Request) {
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	if page < 1 {
-		page = 1
-	}
-
-	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
-	if pageSize < 1 || pageSize > 100 {
-		pageSize = 10
-	}
-
-	persons, err := h.service.GetAll(r.Context(), page, pageSize)
-	if err != nil {
-		h.logger.Error("Failed to get persons", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(persons)
-}
-
 // UpdatePerson обрабатывает PATCH /api/persons/{id}
-// UpdatePerson godoc
 // @Summary Обновить данные человека
-// @Description Обновляет информацию о существующем человеке
+// @Description Обновляет информацию о человеке по его ID
 // @Tags Люди
 // @Accept json
 // @Produce json
@@ -162,10 +129,11 @@ func (h *PersonHandler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeletePerson обрабатывает DELETE /api/persons/{id}
-// DeletePerson godoc
-// @Summary Удалить человека
-// @Description Удаляет запись о человеке по ID
+// @Summary Удалить человека по ID
+// @Description Удаляет запись о человеке по уникальному ID
 // @Tags Люди
+// @Accept json
+// @Produce json
 // @Param id path int true "ID человека"
 // @Success 204 "Человек успешно удалён"
 // @Failure 400 {string} string "Неверный формат ID"
@@ -187,4 +155,93 @@ func (h *PersonHandler) DeletePerson(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// GetAllPersons обрабатывает GET /api/persons
+// @Summary Получить список людей с фильтрацией и пагинацией
+// @Description Возвращает список людей с пагинацией и фильтрацией по полю (имя, фамилия, возраст и т.д.)
+// @Tags Люди
+// @Accept json
+// @Produce json
+// @Param page query int false "Номер страницы" default(1)
+// @Param page_size query int false "Размер страницы" default(10)
+// @Param name query string false "Имя" example("Иван")
+// @Param surname query string false "Фамилия" example("Иванов")
+// @Param age_min query int false "Минимальный возраст"
+// @Param age_max query int false "Максимальный возраст"
+// @Param gender query string false "Пол" enum(male,female)
+// @Param nationality query string false "Национальность"
+// @Success 200 {array} model.Person "Список людей"
+// @Failure 500 {string} string "Ошибка сервера"
+// @Router /api/persons [get]
+func (h *PersonHandler) GetAllPersons(w http.ResponseWriter, r *http.Request) {
+	// Пагинация
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	if page < 1 {
+		page = 1
+	}
+
+	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+
+	// Фильтры
+	filterParams := model.FilterParams{
+		Name:        getStringFromQuery(r, "name"),
+		Surname:     getStringFromQuery(r, "surname"),
+		AgeMin:      getIntFromQuery(r, "age_min"),
+		AgeMax:      getIntFromQuery(r, "age_max"),
+		Gender:      getStringFromQuery(r, "gender"),
+		Nationality: getStringFromQuery(r, "nationality"),
+		Page:        page,
+		PageSize:    pageSize,
+	}
+
+	// Получаем от сервиса с фильтрацией
+	persons, err := h.service.GetAll(r.Context(), filterParams)
+	if err != nil {
+		h.logger.Error("Failed to get persons", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Отправляем ответ
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(persons)
+}
+
+// Утилита для получения строки из query-параметра
+func getStringFromQuery(r *http.Request, key string) *string {
+	value := r.URL.Query().Get(key)
+	if value == "" {
+		return nil
+	}
+	return &value
+}
+
+// Утилита для получения int из query-параметра
+func getIntFromQuery(r *http.Request, key string) *int {
+	value := r.URL.Query().Get(key)
+	if value == "" {
+		return nil
+	}
+	intValue, err := strconv.Atoi(value)
+	if err != nil {
+		return nil
+	}
+	return &intValue
+}
+
+// HealthCheck обрабатывает GET /health
+// @Summary Проверка доступности API
+// @Description Возвращает статус сервера для проверки его доступности
+// @Tags Здоровье
+// @Produce json
+// @Success 200 {string} string "OK"
+// @Failure 500 {string} string "Ошибка сервера"
+// @Router /health [get]
+func (h *PersonHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }

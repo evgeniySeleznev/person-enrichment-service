@@ -68,8 +68,13 @@ func (s *PersonService) GetByID(ctx context.Context, id int64) (*model.Person, e
 }
 
 // GetAll возвращает список людей с пагинацией
-func (s *PersonService) GetAll(ctx context.Context, page, pageSize int) ([]model.Person, error) {
-	return s.personRepo.GetAll(ctx, page, pageSize)
+func (s *PersonService) GetAll(ctx context.Context, filterParams model.FilterParams) ([]model.Person, error) {
+	// Передаем фильтры в репозиторий
+	people, err := s.personRepo.GetAll(ctx, filterParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get filtered people: %w", err)
+	}
+	return people, nil
 }
 
 // Update обновляет данные человека

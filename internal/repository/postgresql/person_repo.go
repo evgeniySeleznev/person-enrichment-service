@@ -57,11 +57,51 @@ func (r *PersonRepository) GetByID(ctx context.Context, id int64) (*model.Person
 	return &person, nil
 }
 
-func (r *PersonRepository) GetAll(ctx context.Context, page, pageSize int) ([]model.Person, error) {
-	query := `SELECT person_id, name, surname, patronymic, age, gender, nationality 
-              FROM people LIMIT $1 OFFSET $2`
+func (r *PersonRepository) GetAll(ctx context.Context, filterParams model.FilterParams) ([]model.Person, error) {
+	query := `SELECT person_id, name, surname, patronymic, age, gender, nationality FROM people WHERE 1=1`
+	var args []interface{}
+	argID := 1 // номер аргумента для $n
 
-	rows, err := r.db.QueryContext(ctx, query, pageSize, (page-1)*pageSize)
+	// Фильтры
+	if filterParams.Name != nil {
+		query += fmt.Sprintf(" AND name ILIKE $%d", argID)
+		args = append(args, "%"+*filterParams.Name+"%")
+		argID++
+	}
+	if filterParams.Surname != nil {
+		query += fmt.Sprintf(" AND surname ILIKE $%d", argID)
+		args = append(args, "%"+*filterParams.Surname+"%")
+		argID++
+	}
+	if filterParams.AgeMin != nil {
+		query += fmt.Sprintf(" AND age >= $%d", argID)
+		args = append(args, *filterParams.AgeMin)
+		argID++
+	}
+	if filterParams.AgeMax != nil {
+		query += fmt.Sprintf(" AND age <= $%d", argID)
+		args = append(args, *filterParams.AgeMax)
+		argID++
+	}
+	if filterParams.Gender != nil {
+		query += fmt.Sprintf(" AND gender = $%d", argID)
+		args = append(args, *filterParams.Gender)
+		argID++
+	}
+	if filterParams.Nationality != nil {
+		query += fmt.Sprintf(" AND nationality = $%d", argID)
+		args = append(args, *filterParams.Nationality)
+		argID++
+	}
+
+	// Пагинация
+	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argID, argID+1)
+	args = append(args, filterParams.PageSize, (filterParams.Page-1)*filterParams.PageSize)
+
+	fmt.Println("Executing query:", query)
+	fmt.Println("With args:", args)
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query people: %w", err)
 	}
