@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"unicode"
 
 	"github.com/evgeniySeleznev/person-enrichment-service/internal/model"
 	"github.com/evgeniySeleznev/person-enrichment-service/internal/service"
 	"github.com/evgeniySeleznev/person-enrichment-service/pkg/logger"
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
 
@@ -24,10 +26,27 @@ type PersonHandler struct {
 }
 
 func NewPersonHandler(service *service.PersonService, logger logger.Logger) *PersonHandler {
+	logger.Debug("ENTER: NewPersonHandler")
 	return &PersonHandler{
 		service: service,
 		logger:  logger,
 	}
+}
+
+var validate = validator.New()
+
+func isAlphaUnicode(fl validator.FieldLevel) bool {
+	for _, ch := range fl.Field().String() {
+		if !unicode.IsLetter(ch) {
+			return false
+		}
+	}
+	return true
+}
+
+func init() {
+	// Регистрируем кастомную валидацию
+	validate.RegisterValidation("alpha_unicode", isAlphaUnicode)
 }
 
 // CreatePerson обрабатывает POST /api/persons
@@ -42,10 +61,17 @@ func NewPersonHandler(service *service.PersonService, logger logger.Logger) *Per
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/persons [post]
 func (h *PersonHandler) CreatePerson(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debug("ENTER: CreatePerson")
 	var input model.PersonInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		h.logger.Error("Invalid JSON", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := validate.Struct(input); err != nil {
+		h.logger.Error("Input validation error: ", err)
+		http.Error(w, "Validation error: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -59,6 +85,7 @@ func (h *PersonHandler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(person)
+	h.logger.Debug("EXIT: CreatePerson")
 }
 
 // GetPerson обрабатывает GET /api/persons/{id}
@@ -73,6 +100,7 @@ func (h *PersonHandler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/persons/{id} [get]
 func (h *PersonHandler) GetPerson(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debug("ENTER: GetPerson")
 	vars := mux.Vars(r)
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
 	if err != nil {
@@ -89,6 +117,7 @@ func (h *PersonHandler) GetPerson(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(person)
+	h.logger.Debug("EXIT: GetPerson")
 }
 
 // UpdatePerson обрабатывает PATCH /api/persons/{id}
@@ -105,6 +134,7 @@ func (h *PersonHandler) GetPerson(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/persons/{id} [patch]
 func (h *PersonHandler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debug("ENTER: UpdatePerson")
 	vars := mux.Vars(r)
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
 	if err != nil {
@@ -126,6 +156,7 @@ func (h *PersonHandler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+	h.logger.Debug("EXIT: UpdatePerson")
 }
 
 // DeletePerson обрабатывает DELETE /api/persons/{id}
@@ -141,6 +172,7 @@ func (h *PersonHandler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/persons/{id} [delete]
 func (h *PersonHandler) DeletePerson(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debug("ENTER: DeletePerson")
 	vars := mux.Vars(r)
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
 	if err != nil {
@@ -155,6 +187,7 @@ func (h *PersonHandler) DeletePerson(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+	h.logger.Debug("EXIT: DeletePerson")
 }
 
 // GetAllPersons обрабатывает GET /api/persons
@@ -175,6 +208,8 @@ func (h *PersonHandler) DeletePerson(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /api/persons [get]
 func (h *PersonHandler) GetAllPersons(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debug("ENTER: GetAllPersons")
+
 	// Пагинация
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	if page < 1 {
@@ -209,6 +244,7 @@ func (h *PersonHandler) GetAllPersons(w http.ResponseWriter, r *http.Request) {
 	// Отправляем ответ
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(persons)
+	h.logger.Debug("EXIT: GetAllPersons")
 }
 
 // Утилита для получения строки из query-параметра
@@ -242,6 +278,7 @@ func getIntFromQuery(r *http.Request, key string) *int {
 // @Failure 500 {string} string "Ошибка сервера"
 // @Router /health [get]
 func (h *PersonHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debug("ENTER: HealthCheck")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }

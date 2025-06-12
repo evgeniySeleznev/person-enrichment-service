@@ -40,6 +40,9 @@ func main() {
 	}
 	defer db.Close()
 
+	// Логируем успешное подключение к базе данных
+	appLogger.Info("Database initialized successfully")
+
 	personService := initServices(db, appLogger)
 	router := http.NewRouter(personService, appLogger)
 

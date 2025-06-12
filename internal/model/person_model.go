@@ -38,15 +38,15 @@ type PersonInput struct {
 
 	// Имя
 	// example: Иван
-	Name string `json:"name" validate:"required,min=2,max=50"`
+	Name string `json:"name" validate:"required,alpha_unicode"`
 
 	// Фамилия
 	//example: Иванов
-	Surname string `json:"surname" validate:"required,min=2,max=50"`
+	Surname string `json:"surname" validate:"required,alpha_unicode"`
 
 	// Отчество
 	// example: Иванович
-	Patronymic *string `json:"patronymic" validate:"omitempty,min=2,max=50"`
+	Patronymic *string `json:"patronymic,omitempty" validate:"omitempty,alpha_unicode"`
 }
 
 // FilterParams содержит параметры фильтрации

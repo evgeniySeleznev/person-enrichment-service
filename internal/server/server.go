@@ -20,6 +20,7 @@ type Server struct {
 }
 
 func NewServer(port string, router *mux.Router, logger logger.Logger) *Server {
+	logger.Debug("ENTER: NewServer")
 	return &Server{
 		httpServer: &http.Server{
 			Addr:         ":" + port,
@@ -33,6 +34,7 @@ func NewServer(port string, router *mux.Router, logger logger.Logger) *Server {
 }
 
 func (s *Server) Start() {
+	s.logger.Debug("ENTER: Server Start")
 	go func() {
 		s.logger.Info("Starting server on " + s.httpServer.Addr)
 		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -51,4 +53,5 @@ func (s *Server) Start() {
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		s.logger.Error("Server shutdown error", err)
 	}
+	s.logger.Info("Server stopped gracefully")
 }

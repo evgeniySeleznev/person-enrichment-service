@@ -9,6 +9,7 @@ import (
 )
 
 func NewRouter(service *service.PersonService, logger logger.Logger) *mux.Router {
+	logger.Debug("ENTER: NewRouter")
 	router := mux.NewRouter()
 	handler := NewPersonHandler(service, logger)
 
@@ -34,17 +35,6 @@ func NewRouter(service *service.PersonService, logger logger.Logger) *mux.Router
 	api.HandleFunc("/persons/{id}", handler.DeletePerson).Methods("DELETE")
 	router.HandleFunc("/health", handler.HealthCheck).Methods("GET")
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
-
-	return router
-
-	// Swagger UI
-	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
-
-	// Health check
-	router.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	}).Methods("GET")
 
 	return router
 }
